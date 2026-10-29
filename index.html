@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="sr-Latn-ME">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Naša zgrada</title>
+<meta name="theme-color" content="#0f3d3e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Naša zgrada">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f3f1ec;--card:#fff;--ink:#1c2321;--muted:#6b7570;--line:#e3e0d8;
+  --pri:#0f3d3e;--pri2:#155e5f;--acc:#d98e32;--red:#b3372f;--green:#2f7d4f;
+  --r:14px;--sh:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;line-height:1.2}
+h2{font-size:16px}
+small{display:block;color:var(--muted);font-size:12px}
+.muted{color:var(--muted)}
+.err{color:var(--red);padding:16px}
+.hidden{display:none!important}
+.r{text-align:right;white-space:nowrap}
+
+/* auth */
+.auth{min-height:100vh;display:grid;place-items:center;padding:20px}
+.auth-card{width:100%;max-width:380px;background:var(--card);border-radius:20px;padding:28px 22px;box-shadow:var(--sh);text-align:center}
+.auth-card h1{font-size:24px;margin:10px 0 4px}
+.auth-card form{text-align:left;margin-top:20px}
+.logo svg{width:56px;height:56px}
+.msg{min-height:20px;font-size:13px;color:var(--pri2);text-align:center;margin:10px 0 0}
+.link{background:none;border:0;color:var(--pri2);padding:8px 0;width:100%;cursor:pointer;font-size:13px}
+
+/* shell */
+.top{position:sticky;top:0;z-index:5;background:var(--pri);color:#fff;
+  padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;gap:10px;align-items:center;min-width:0}
+.brand svg{width:34px;height:34px;flex:none}
+.brand b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:#b9cfcf}
+.top .btns{display:flex;gap:6px;flex:none}
+.top .btn{background:rgba(255,255,255,.12);color:#fff;border:0}
+.tabs{position:sticky;top:calc(env(safe-area-inset-top) + 56px);z-index:4;background:var(--bg);
+  display:flex;gap:6px;overflow-x:auto;padding:10px 16px;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;cursor:pointer;font-size:14px}
+.tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+main{max-width:980px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom))}
+.loading{padding:40px;text-align:center;color:var(--muted)}
+
+/* components */
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.danger{background:#fff;border-color:var(--red);color:var(--red)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.block{width:100%;margin-top:8px;padding:12px}
+.btn:disabled{opacity:.5}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+.bar input,.bar select{flex:1 1 140px;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
+.stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.stat b{display:block;font-size:22px;margin:4px 0 2px}
+.stat.big{grid-column:1/-1;background:var(--pri);color:#fff}
+.stat.big span,.stat.big small{color:#b9cfcf}
+.stat.big b{font-size:30px}
+.stat.warn b{color:var(--red)}
+.stat.ok b{color:var(--green)}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 14px 10px}
+.card-body{padding:0 14px 14px}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 14px;border-top:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;background:#faf9f6}
+tr.click{cursor:pointer}
+tr.click:active{background:#f6f4ef}
+tr.off td{opacity:.5}
+tfoot td{font-weight:700;background:#faf9f6}
+@media(max-width:480px){th,td{padding:9px 6px}th:first-child,td:first-child{padding-left:14px}th:last-child,td:last-child{padding-right:14px}}
+.empty{padding:24px 14px;text-align:center;color:var(--muted)}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.badge.red{background:#f8e3e1;color:var(--red)}
+.badge.green{background:#e1f1e7;color:var(--green)}
+.badge.grey{background:#eeece7;color:var(--muted)}
+.neg{color:var(--red)}.pos{color:var(--green)}
+.hint{font-size:13px;color:var(--muted);margin:4px 0 12px}
+.x-del{background:none;border:0;color:var(--red);font-size:18px;cursor:pointer;padding:0 4px}
+
+/* forms */
+.field{display:block;margin-bottom:12px}
+.field span{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;font-size:16px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pri2);outline-offset:-1px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;gap:8px;align-items:center;margin:6px 0 12px;font-size:14px}
+.check input{width:auto}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.actions .btn{flex:1}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(15,25,25,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+@media(min-width:700px){.modal{align-items:center}.sheet{border-radius:20px}}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.x{background:none;border:0;font-size:26px;line-height:1;cursor:pointer;color:var(--muted)}
+.sheet .card{box-shadow:none;border:1px solid var(--line)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin-bottom:12px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;
+  background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;max-width:90vw}
+.toast.bad{background:var(--red)}
+
+/* print */
+#print{display:none}
+@media print{
+  body.printing #app,body.printing .modal,body.printing .toast{display:none!important}
+  body.printing #print{display:block}
+  body{background:#fff}
+}
+.doc{font:12px/1.4 Arial,Helvetica,sans-serif;color:#000;padding:10mm}
+.doc h1{font-size:18px;margin:0 0 4px}
+.doc h2{font-size:14px;margin:14px 0 6px}
+.doc table{width:100%;border-collapse:collapse;margin:6px 0}
+.doc th,.doc td{border:1px solid #999;padding:4px 6px;background:none;color:#000;font-size:12px;text-transform:none;letter-spacing:0}
+.doc .head{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}
+.doc .total td{font-weight:700;font-size:14px}
+.doc .pay{border:1px dashed #000;padding:8px;margin-top:10px}
+.doc .sig{margin-top:30px;text-align:right}
+.page{page-break-after:always}
+.page:last-child{page-break-after:auto}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Učitavanje…</div></div>
+<div id="modal" class="modal hidden"></div>
+<div id="toast" class="toast hidden"></div>
+<div id="print"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script>
+'use strict';
+/* ================================================================
+   NAŠA ZGRADA — aplikacija za upravljanje finansijama zgrade
+   ================================================================ */
+const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+const S = { user:null, profile:null, settings:{}, racuni:[], prostori:[], view:(location.hash.slice(1)||'pregled') };
+const app = document.getElementById('app');
+const $ = s => document.querySelector(s);
+
+const ICON = `<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#d98e32"/><path d="M18 52V20l14-8 14 8v32" fill="#0f3d3e"/><g fill="#f3f1ec"><rect x="23" y="24" width="6" height="6" rx="1"/><rect x="35" y="24" width="6" height="6" rx="1"/><rect x="23" y="34" width="6" height="6" rx="1"/><rect x="35" y="34" width="6" height="6" rx="1"/><rect x="29" y="44" width="6" height="8" rx="1"/></g></svg>`;
+
+/* ---------- pomoćne ---------- */
+const fmt = new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'});
+const eur = n => fmt.format(Number(n)||0);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MJ = ['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar'];
+const KATEGORIJE = ['Struja','Voda','Čišćenje','Lift','Održavanje','Popravke','Osiguranje','Bankarska provizija','Administracija','Investicije','Ostalo'];
+const TIPOVI = {stan:'Stan',garaza:'Garaža',ostava:'Ostava',poslovni:'Poslovni prostor',ostalo:'Ostalo'};
+const pad = n => String(n).padStart(2,'0');
+const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today = () => isoDate(new Date());
+const curMonth = () => today().slice(0,7);
+const monthStart = ym => ym + '-01';
+const nextMonthStart = ym => { const [y,m] = ym.split('-').map(Number); return m === 12 ? `${y+1}-01-01` : `${y}-${pad(m+1)}-01`; };
+const fmtDate = d => d ? d.slice(0,10).split('-').reverse().join('.') + '.' : '';
+const fmtPeriod = d => { const [y,m] = d.split('-'); return `${MJ[+m-1]} ${y}`; };
+const sum = (rows, k='iznos') => rows.reduce((s,r) => s + (Number(r[k])||0), 0);
+const num = v => Number(String(v).replace(',','.')) || 0;
+const sortNat = (arr,k) => [...arr].sort((a,b) => String(a[k]).localeCompare(String(b[k]),'sr',{numeric:true}));
+const isAdmin = () => S.profile?.uloga === 'admin';
+const prostorById = id => S.prostori.find(p => p.id === id);
+const glavniRacun = () => S.racuni.find(r => r.tip === 'glavni') || S.racuni[0];
+
+function chk(res){ if (res.error) throw res.error; return res.data; }
+// Supabase vraća najviše 1000 redova po upitu — ovo čita sve, stranu po stranu
+async function fetchAll(build){
+  const out = [];
+  for (let from = 0; ; from += 1000){
+    const rows = chk(await build().range(from, from + 999));
+    out.push(...rows);
+    if (rows.length < 1000) return out;
+  }
+}
+function pozitivan(v){ const n = num(v); if (!(n > 0)) throw new Error('Iznos mora biti veći od nule.'); return n; }
+function errMsg(e){
+  if (e?.code === '23514') return 'Neispravna vrijednost (provjerite iznos).';
+  if (e?.code === '23505') return 'Takav zapis već postoji.';
+  if (e?.code === '23503') return 'Zapis se koristi na drugom mjestu i ne može se obrisati.';
+  return e?.message || String(e);
+}
+let toastT;
+function toast(msg, bad=false){
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : '');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), bad ? 5000 : 2200);
+}
+const saldo = dug => {
+  dug = Number(dug)||0;
+  if (dug > 0.009) return `<span class="badge red">duguje ${eur(dug)}</span>`;
+  if (dug < -0.009) return `<span class="badge green">preplata ${eur(-dug)}</span>`;
+  return `<span class="badge grey">izmireno</span>`;
+};
+const empty = t => `<div class="empty">${t}</div>`;
+
+/* ---------- forme i modal ---------- */
+const field = (label, input) => `<label class="field"><span>${label}</span>${input}</label>`;
+const inp = (name, val='', attrs='') => `<input name="${name}" value="${esc(val)}" ${attrs}>`;
+const sel = (name, opts, val, attrs='') =>
+  `<select name="${name}" ${attrs}>${opts.map(([v,l]) => `<option value="${esc(v)}" ${String(v)===String(val??'')?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
+const prostorOpts = () => sortNat(S.prostori,'oznaka').map(p => [p.id, `${p.oznaka}${p.vlasnik ? ' — '+p.vlasnik : ''}`]);
+
+function closeModal(){ const m = $('#modal'); m.classList.add('hidden'); m.innerHTML = ''; }
+function modal(title, body, {onSubmit, submitLabel='Sačuvaj'} = {}){
+  const m = $('#modal');
+  m.innerHTML = `<div class="sheet"><div class="sheet-head"><h3>${esc(title)}</h3><button class="x" type="button" data-close>×</button></div>
+    <form id="mform" novalidate>${body}${onSubmit ? `<div class="actions"><button type="button" class="btn ghost" data-close>Otkaži</button><button class="btn primary" type="submit">${submitLabel}</button></div>` : ''}</form></div>`;
+  m.classList.remove('hidden');
+  m.querySelectorAll('[data-close]').forEach(b => b.onclick = closeModal);
+  m.onclick = e => { if (e.target === m) closeModal(); };
+  const f = m.querySelector('#mform');
+  f.onsubmit = async e => {
+    e.preventDefault();
+    if (!onSubmit) return;
+    if (!f.reportValidity()) return;
+    const btn = f.querySelector('.btn.primary'); btn.disabled = true;
+    try { await onSubmit(Object.fromEntries(new FormData(f)), f); }
+    catch (err) { toast(errMsg(err), true); }
+    finally { btn.disabled = false; }
+  };
+  return f;
+}
+
+function printDoc(html){
+  const p = $('#print'); p.innerHTML = html;
+  document.body.classList.add('printing');
+  const done = () => { document.body.classList.remove('printing'); p.innerHTML = ''; window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(() => window.print(), 80);
+}
+const docHead = (title, sub='') => `<div class="head"><div><h1>${esc(S.settings.naziv||'Stambena zgrada')}</h1>
+  <div>${esc(S.settings.adresa||'')}${S.settings.pib ? ' · PIB '+esc(S.settings.pib) : ''}</div></div>
+  <div style="text-align:right"><b>${esc(title)}</b><div>${esc(sub)}</div><div>Datum: ${fmtDate(today())}</div></div></div>`;
+
+/* ================================================================
+   AUTENTIFIKACIJA
+   ================================================================ */
+sb.auth.onAuthStateChange((event, session) => {
+  setTimeout(() => {
+    if (event === 'PASSWORD_RECOVERY') return newPassword();
+    handleSession(session);
+  }, 0);
+});
+
+async function handleSession(session){
+  if (!session){ S.user = null; S.profile = null; return renderLogin(); }
+  if (S.user && S.user.id === session.user.id && S.profile) return;
+  S.user = session.user;
+  try { await boot(); }
+  catch (e){
+    app.innerHTML = `<div class="auth"><div class="auth-card"><p class="err">${esc(errMsg(e))}</p><button class="btn" id="out">Odjava</button></div></div>`;
+    $('#out').onclick = logout;
+  }
+}
+async function logout(){ await sb.auth.signOut(); S.user = null; S.profile = null; renderLogin(); }
+
+async function boot(){
+  S.profile = chk(await sb.from('profiles').select('*').eq('id', S.user.id).maybeSingle());
+  if (!S.profile) return renderNotLinked();
+  await loadRef();
+  if (!isAdmin() && !S.prostori.length) return renderNotLinked();
+  renderShell();
+}
+async function loadRef(){
+  S.settings = chk(await sb.from('podesavanja').select('*').eq('id',1).maybeSingle()) || {};
+  S.racuni   = chk(await sb.from('racuni').select('*').order('tip').order('naziv'));
+  await refreshProstori();
+}
+async function refreshProstori(){ S.prostori = sortNat(await fetchAll(() => sb.from('prostori').select('*').order('id')), 'oznaka'); }
+
+function renderLogin(){
+  app.innerHTML = `<div class="auth"><div class="auth-card"><div class="logo">${ICON}</div>
+    <h1>Naša zgrada</h1><p class="muted">Finansije zgrade — otvoreno za sve stanare.</p>
+    <form id="lf">
+      ${field('Email', '<input name="email" type="email" required autocomplete="email" inputmode="email">')}
+      ${field('Lozinka', '<input name="password" type="password" required minlength="6" autocomplete="current-password">')}
+      <button class="btn primary block" type="submit">Prijava</button>
+      <button class="btn block" type="button" id="reg">Registracija</button>
+      <button class="link" type="button" id="forgot">Zaboravljena lozinka?</button>
+      <p class="msg" id="msg"></p>
+    </form></div></div>`;
+  const f = $('#lf'), msg = t => $('#msg').textContent = t;
+  const vals = () => ({ email: f.elements.email.value.trim().toLowerCase(), password: f.elements.password.value });
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const {error} = await sb.auth.signInWithPassword(vals());
+    if (error) msg(error.message.includes('confirm') ? 'Email nije potvrđen — provjerite poštu.' : 'Pogrešan email ili lozinka.');
+  };
+  $('#reg').onclick = async () => {
+    if (!f.reportValidity()) return;
+    const {data, error} = await sb.auth.signUp({...vals(), options:{ emailRedirectTo: location.origin + location.pathname }});
+    if (error) return msg(error.message);
+    msg(data.session ? '' : 'Poslali smo link za potvrdu na vaš email. Koristite email koji ste dali upravniku.');
+  };
+  $('#forgot').onclick = async () => {
+    const email = f.elements.email.value.trim();
+    if (!email) return msg('Upišite email pa kliknite ponovo.');
+    const {error} = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    msg(error ? error.message : 'Poslali smo link za novu lozinku.');
+  };
+}
+
+function newPassword(){
+  modal('Nova lozinka', field('Nova lozinka (min. 6 znakova)', '<input name="p" type="password" required minlength="6" autocomplete="new-password">'), {
+    onSubmit: async d => { chk(await sb.auth.updateUser({ password: d.p })); closeModal(); toast('Lozinka je promijenjena.'); }
+  });
+}
+
+function renderNotLinked(){
+  app.innerHTML = `<div class="auth"><div class="auth-card"><div class="logo">${ICON}</div>
+    <h1>Nalog nije povezan</h1>
+    <p class="muted">Prijavljeni ste kao <b>${esc(S.user.email)}</b>, ali ovaj email nije upisan ni uz jedan stan.
+    Javite upravniku da upiše ovaj email uz vaš stan, pa kliknite „Osvježi".</p>
+    <button class="btn primary block" id="rf">Osvježi</button><button class="btn block" id="out">Odjava</button></div></div>`;
+  $('#rf').onclick = () => { S.profile = null; handleSession({user:S.user}); };
+  $('#out').onclick = logout;
+}
+
+/* ================================================================
+   OKVIR APLIKACIJE
+   ================================================================ */
+const VIEWS_ADMIN = [['pregled','Pregled'],['prostori','Prostori'],['uplate','Uplate'],['rashodi','Rashodi'],
+  ['zaduzenja','Zaduženja'],['dugovanja','Dugovanja'],['izvjestaji','Izvještaji'],['podesavanja','Podešavanja']];
+function viewList(){
+  if (isAdmin()) return VIEWS_ADMIN;
+  const v = [['pregled','Pregled'],['moj','Moj račun'],['rashodi','Rashodi'],['izvjestaji','Izvještaji']];
+  if (S.settings.prikazi_dugovanja) v.splice(3,0,['dugovanja','Dugovanja']);
+  return v;
+}
+function renderShell(){
+  const views = viewList();
+  if (!views.some(v => v[0] === S.view)) S.view = 'pregled';
+  app.innerHTML = `<header class="top"><div class="brand">${ICON}<div><b>${esc(S.settings.naziv||'Naša zgrada')}</b>
+    <small>${isAdmin() ? 'Upravnik' : esc(S.prostori.map(p => p.oznaka).join(', '))}</small></div></div>
+    <div class="btns"><button class="btn sm" id="pw" title="Promjena lozinke">Lozinka</button><button class="btn sm" id="out">Odjava</button></div></header>
+    <nav class="tabs">${views.map(([k,l]) => `<button data-v="${k}">${l}</button>`).join('')}</nav><main id="main"></main>`;
+  $('#out').onclick = logout;
+  $('#pw').onclick = newPassword;
+  app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => go(b.dataset.v));
+  go(S.view);
+}
+async function go(v){
+  S.view = v;
+  history.replaceState(null, '', '#' + v);
+  app.querySelectorAll('.tabs button').forEach(b => {
+    b.classList.toggle('on', b.dataset.v === v);
+    if (b.dataset.v === v) b.scrollIntoView({block:'nearest', inline:'center'});
+  });
+  const main = $('#main');
+  main.innerHTML = '<div class="loading">Učitavanje…</div>';
+  try { await VIEWS[v](main); }
+  catch (e){ main.innerHTML = `<p class="err">${esc(errMsg(e))}</p>`; }
+}
+const rerender = () => go(S.view);
+window.addEventListener('hashchange', () => {
+  if (!S.profile || !$('#main')) return;
+  const v = location.hash.slice(1);
+  if (v === S.view) return;
+  go(viewList().some(x => x[0] === v) ? v : 'pregled');
+});
+
+/* ================================================================
+   EKRANI
+   ================================================================ */
+const VIEWS = {
+
+/* ---------- PREGLED ---------- */
+async pregled(m){
+  const d = new Date(), god = d.getFullYear(), mj = d.getMonth();
+  const [racuni, mjeseci, stanje, rashodi] = await Promise.all([
+    sb.rpc('stanje_racuna').then(chk),
+    sb.rpc('mjesecni_pregled', {p_godina: god}).then(chk),
+    sb.from('stanje_prostora').select('*').then(chk),
+    sb.from('rashodi').select('*').order('datum',{ascending:false}).order('created_at',{ascending:false}).limit(6).then(chk)
+  ]);
+  const ovaj = mjeseci.find(r => r.mjesec === mj+1) || {};
+  const ukupno = sum(racuni, 'stanje');
+  let h = `<div class="grid">
+    <div class="stat big"><span>Stanje na računima zgrade</span><b>${eur(ukupno)}</b>
+      <small>${racuni.map(r => `${esc(r.naziv)}: ${eur(r.stanje)}`).join(' · ')}</small></div>
+    <div class="stat"><span>Uplate · ${MJ[mj]}</span><b>${eur(ovaj.uplaceno)}</b><small>zaduženo ${eur(ovaj.zaduzeno)}</small></div>
+    <div class="stat"><span>Rashodi · ${MJ[mj]}</span><b>${eur(ovaj.rashodi)}</b><small>tekući mjesec</small></div>`;
+  if (isAdmin()){
+    const duz = stanje.filter(s => Number(s.dug) > 0.009);
+    h += `<div class="stat ${duz.length ? 'warn' : 'ok'}"><span>Ukupna dugovanja</span><b>${eur(sum(duz,'dug'))}</b>
+      <small>${duz.length} od ${stanje.length} prostora</small></div></div>
+      ${Number(ovaj.zaduzeno) === 0 && S.prostori.some(p => p.aktivan && Number(p.mjesecna_naknada) > 0)
+        ? `<div class="card"><div class="card-body" style="padding-top:14px"><b>Zaduženja za ${MJ[mj].toLowerCase()} nisu generisana.</b>
+           <p class="hint">Bez njih se dug stanara ne povećava.</p><button class="btn primary" id="gz">Generiši za ${MJ[mj].toLowerCase()}</button></div></div>` : ''}
+      <div class="bar"><button class="btn primary" id="nu">+ Uplata</button><button class="btn" id="nr">+ Rashod</button></div>`;
+  } else {
+    const dug = sum(stanje, 'dug');
+    h += `<div class="stat ${dug > 0.009 ? 'warn' : 'ok'}"><span>Vaše stanje</span>
+      <b>${dug > 0.009 ? eur(dug) : dug < -0.009 ? eur(-dug) : eur(0)}</b>
+      <small>${dug > 0.009 ? 'dugovanje' : dug < -0.009 ? 'preplata' : 'sve je izmireno'}</small></div></div>`;
+  }
+  h += `<section class="card"><div class="card-head"><h2>Posljednji rashodi</h2><button class="btn sm ghost" id="sr">Svi rashodi →</button></div>
+    ${rashodi.length ? rashodiTable(rashodi) : empty('Još nema unijetih rashoda.')}</section>`;
+  m.innerHTML = h;
+  $('#sr').onclick = () => go('rashodi');
+  if (isAdmin()){
+    $('#nu').onclick = () => editUplata(); $('#nr').onclick = () => editRashod();
+    const gz = $('#gz');
+    if (gz) gz.onclick = async () => {
+      try { const n = chk(await sb.rpc('generisi_zaduzenja', {p_period: monthStart(curMonth())})); toast(`Kreirano ${n} zaduženja.`); rerender(); }
+      catch (err){ toast(errMsg(err), true); }
+    };
+  }
+},
+
+/* ---------- PROSTORI (admin) ---------- */
+async prostori(m){
+  await refreshProstori();
+  const rows = sortNat(chk(await sb.from('stanje_prostora').select('*')), 'oznaka');
+  m.innerHTML = `<div class="bar"><input type="search" id="q" placeholder="Pretraga po oznaci ili vlasniku…">
+    <button class="btn primary" id="add">+ Prostor</button><button class="btn" id="bulk">Dodaj više</button></div>
+    <section class="card"><div class="tbl"><table><thead><tr><th>Prostor</th><th>Vlasnik</th><th class="r">Stanje</th></tr></thead>
+    <tbody id="tb"></tbody></table></div></section>`;
+  const draw = q => {
+    const list = rows.filter(r => !q || `${r.oznaka} ${r.vlasnik||''}`.toLowerCase().includes(q));
+    $('#tb').innerHTML = list.map(r => `<tr class="click ${r.aktivan ? '' : 'off'}" data-id="${r.id}">
+      <td><b>${esc(r.oznaka)}</b><small>${TIPOVI[r.tip]||r.tip} · ${eur(r.mjesecna_naknada)}${r.aktivan ? '' : ' · neaktivan'}</small></td>
+      <td>${esc(r.vlasnik||'—')}<small>${r.email ? '✓ email upisan' : 'bez emaila'}</small></td>
+      <td class="r">${saldo(r.dug)}</td></tr>`).join('')
+      || `<tr><td colspan="3">${empty(rows.length ? 'Nema rezultata.' : 'Još nema prostora. Kliknite „Dodaj više" za brzi unos svih stanova.')}</td></tr>`;
+  };
+  draw('');
+  $('#q').oninput = e => draw(e.target.value.trim().toLowerCase());
+  $('#tb').onclick = e => { const tr = e.target.closest('tr[data-id]'); if (tr) karticaProstora(tr.dataset.id); };
+  $('#add').onclick = () => editProstor();
+  $('#bulk').onclick = bulkProstori;
+},
+
+/* ---------- UPLATE (admin) ---------- */
+async uplate(m){
+  m.innerHTML = `<div class="bar"><input type="month" id="mon" value="${S.mUpl||curMonth()}"><button class="btn primary" id="add">+ Nova uplata</button></div>
+    <section class="card" id="lst"></section>`;
+  const load = async () => {
+    const ym = $('#mon').value || curMonth(); S.mUpl = ym;
+    const rows = chk(await sb.from('uplate').select('*, prostori(oznaka,vlasnik), racuni(naziv)')
+      .gte('datum', monthStart(ym)).lt('datum', nextMonthStart(ym))
+      .order('datum',{ascending:false}).order('created_at',{ascending:false}));
+    $('#lst').innerHTML = `<div class="card-head"><h2>${fmtPeriod(monthStart(ym))} · ${rows.length} uplata</h2><b>${eur(sum(rows))}</b></div>` +
+      (rows.length ? `<div class="tbl"><table><thead><tr><th>Datum</th><th>Prostor</th><th>Opis</th><th class="r">Iznos</th></tr></thead><tbody>
+      ${rows.map((r,i) => `<tr class="click" data-i="${i}"><td>${fmtDate(r.datum)}</td><td><b>${esc(r.prostori?.oznaka)}</b><small>${esc(r.prostori?.vlasnik||'')}</small></td>
+        <td>${esc(r.opis||'—')}<small>${esc(r.racuni?.naziv||'')}</small></td><td class="r">${eur(r.iznos)}</td></tr>`).join('')}
+      </tbody></table></div>` : empty('Nema uplata u ovom mjesecu.'));
+    $('#lst').onclick = e => { const tr = e.target.closest('tr[data-i]'); if (tr) editUplata(rows[tr.dataset.i]); };
+  };
+  $('#mon').onchange = load;
+  $('#add').onclick = () => editUplata();
+  await load();
+},
+
+/* ---------- RASHODI ---------- */
+async rashodi(m){
+  m.innerHTML = `<div class="bar"><input type="month" id="mon" value="${S.mRas||curMonth()}">
+    ${isAdmin() ? '<button class="btn primary" id="add">+ Novi rashod</button>' : ''}</div><section class="card" id="lst"></section>`;
+  const load = async () => {
+    const ym = $('#mon').value || curMonth(); S.mRas = ym;
+    const rows = chk(await sb.from('rashodi').select('*')
+      .gte('datum', monthStart(ym)).lt('datum', nextMonthStart(ym))
+      .order('datum',{ascending:false}).order('created_at',{ascending:false}));
+    $('#lst').innerHTML = `<div class="card-head"><h2>${fmtPeriod(monthStart(ym))}</h2><b>${eur(sum(rows))}</b></div>` +
+      (rows.length ? rashodiTable(rows, isAdmin()) : empty('Nema rashoda u ovom mjesecu.'));
+    if (isAdmin()) $('#lst').onclick = e => { const tr = e.target.closest('tr[data-i]'); if (tr) editRashod(rows[tr.dataset.i]); };
+  };
+  $('#mon').onchange = load;
+  if (isAdmin()) $('#add').onclick = () => editRashod();
+  await load();
+},
+
+/* ---------- ZADUŽENJA (admin) ---------- */
+async zaduzenja(m){
+  m.innerHTML = `<div class="bar"><input type="month" id="mon" value="${S.mZad||curMonth()}">
+    <button class="btn primary" id="gen">Generiši mjesečna</button><button class="btn" id="jed">+ Jednokratno</button></div>
+    <p class="hint">„Generiši mjesečna" pravi redovno zaduženje za sve aktivne prostore po njihovoj naknadi. Ponovni klik ne pravi duplikate.</p>
+    <section class="card" id="lst"></section>`;
+  const load = async () => {
+    const ym = $('#mon').value || curMonth(); S.mZad = ym;
+    const rows = chk(await sb.from('zaduzenja').select('*, prostori(oznaka,vlasnik)').eq('period', monthStart(ym)));
+    rows.sort((a,b) => String(a.prostori?.oznaka).localeCompare(String(b.prostori?.oznaka),'sr',{numeric:true}));
+    $('#lst').innerHTML = `<div class="card-head"><h2>${fmtPeriod(monthStart(ym))} · ${rows.length} stavki</h2><b>${eur(sum(rows))}</b></div>` +
+      (rows.length ? `<div class="tbl"><table><thead><tr><th>Prostor</th><th>Opis</th><th class="r">Iznos</th><th></th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td><b>${esc(r.prostori?.oznaka)}</b><small>${esc(r.prostori?.vlasnik||'')}</small></td><td>${esc(r.opis)}</td>
+        <td class="r">${eur(r.iznos)}</td><td class="r"><button class="x-del" data-del="${r.id}" title="Obriši">×</button></td></tr>`).join('')}
+      </tbody></table></div>` : empty('Za ovaj mjesec još nema zaduženja.'));
+    $('#lst').onclick = async e => {
+      const b = e.target.closest('[data-del]'); if (!b) return;
+      if (!confirm('Obrisati ovo zaduženje?')) return;
+      try { chk(await sb.from('zaduzenja').delete().eq('id', b.dataset.del)); toast('Obrisano'); load(); } catch (err){ toast(errMsg(err), true); }
+    };
+  };
+  $('#mon').onchange = load;
+  $('#gen').onclick = async () => {
+    const ym = $('#mon').value || curMonth();
+    if (!confirm(`Generisati redovna zaduženja za ${fmtPeriod(monthStart(ym))}?`)) return;
+    try { const n = chk(await sb.rpc('generisi_zaduzenja', {p_period: monthStart(ym)})); toast(n ? `Kreirano ${n} zaduženja.` : 'Sva zaduženja za ovaj mjesec već postoje.'); load(); }
+    catch (err){ toast(errMsg(err), true); }
+  };
+  $('#jed').onclick = () => jednokratno($('#mon').value || curMonth(), load);
+  await load();
+},
+
+/* ---------- DUGOVANJA ---------- */
+async dugovanja(m){
+  m.innerHTML = `<div class="bar"><select id="min">${[1,2,3,6,12].map(n => `<option value="${n}" ${n===(S.minDug||1)?'selected':''}>Dug ${n}+ mjeseci</option>`).join('')}</select>
+    <button class="btn" id="pr">Štampaj</button></div><section class="card" id="lst"></section>`;
+  let all;
+  if (isAdmin()) all = chk(await sb.from('stanje_prostora').select('*')).filter(r => Number(r.dug) > 0.009);
+  else all = chk(await sb.rpc('dugovanja_javno'));
+  all.sort((a,b) => b.dug - a.dug);
+  let rows = [];
+  const draw = () => {
+    S.minDug = +$('#min').value;
+    rows = all.filter(r => r.mjeseci_duga >= S.minDug);
+    $('#lst').innerHTML = `<div class="card-head"><h2>${rows.length} prostora</h2><b class="neg">${eur(sum(rows,'dug'))}</b></div>` +
+      (rows.length ? `<div class="tbl"><table><thead><tr><th>Prostor</th>${isAdmin()?'<th>Vlasnik</th>':''}<th class="r">Mjeseci</th><th class="r">Dug</th></tr></thead><tbody>
+      ${rows.map(r => `<tr ${isAdmin()?`class="click" data-id="${r.id}"`:''}><td><b>${esc(r.oznaka)}</b><small>${TIPOVI[r.tip]||''}</small></td>
+        ${isAdmin()?`<td>${esc(r.vlasnik||'—')}<small>${esc(r.telefon||'')}</small></td>`:''}
+        <td class="r">${r.mjeseci_duga}</td><td class="r neg">${eur(r.dug)}</td></tr>`).join('')}</tbody></table></div>` : empty('Nema dugovanja za ovaj kriterijum. 👍'));
+  };
+  draw();
+  $('#min').onchange = draw;
+  if (isAdmin()) $('#lst').onclick = e => { const tr = e.target.closest('tr[data-id]'); if (tr) karticaProstora(tr.dataset.id); };
+  $('#pr').onclick = () => printDoc(`<div class="doc">${docHead('PREGLED DUGOVANJA', `Dug ${S.minDug}+ mjeseci`)}
+    <table><thead><tr><th>Prostor</th>${isAdmin()?'<th>Vlasnik</th>':''}<th>Mjeseci</th><th>Dug</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${esc(r.oznaka)}</td>${isAdmin()?`<td>${esc(r.vlasnik||'')}</td>`:''}<td>${r.mjeseci_duga}</td><td>${eur(r.dug)}</td></tr>`).join('')}
+    <tr class="total"><td colspan="${isAdmin()?3:2}">Ukupno</td><td>${eur(sum(rows,'dug'))}</td></tr></tbody></table></div>`);
+},
+
+/* ---------- IZVJEŠTAJI ---------- */
+async izvjestaji(m){
+  const cy = new Date().getFullYear(); S.god = S.god || cy;
+  m.innerHTML = `<div class="bar"><select id="god">${[0,1,2,3,4].map(i => cy-i).map(y => `<option ${y===S.god?'selected':''}>${y}</option>`).join('')}</select>
+    <button class="btn" id="pr">Štampaj godišnji izvještaj</button></div>
+    ${isAdmin() ? `<section class="card"><div class="card-head"><h2>Mjesečni računi za stanare</h2></div><div class="card-body">
+      <div class="bar"><input type="month" id="rm" value="${curMonth()}"><button class="btn primary" id="rac">Štampaj sve račune</button></div>
+      <p class="hint">Jedan račun po stranici, sa stanjem duga i istorijom uplata za tekuću godinu. U dijalogu za štampu izaberite „Sačuvaj kao PDF".</p>
+      <button class="btn sm" id="bk">Preuzmi rezervnu kopiju (JSON)</button></div></section>` : ''}
+    <div id="lst"></div>`;
+  let data = {};
+  const load = async () => {
+    S.god = +$('#god').value;
+    const [mj, ras] = await Promise.all([
+      sb.rpc('mjesecni_pregled', {p_godina: S.god}).then(chk),
+      sb.from('rashodi').select('kategorija,iznos').gte('datum', `${S.god}-01-01`).lt('datum', `${S.god+1}-01-01`).then(chk)
+    ]);
+    const kat = {}; ras.forEach(r => kat[r.kategorija] = (kat[r.kategorija]||0) + Number(r.iznos));
+    const katRows = Object.entries(kat).sort((a,b) => b[1]-a[1]);
+    data = {mj, katRows};
+    const T = k => sum(mj, k);
+    $('#lst').innerHTML = `<section class="card"><div class="card-head"><h2>Prihodi i rashodi ${S.god}</h2></div><div class="tbl"><table>
+      <thead><tr><th>Mjesec</th><th class="r">Uplate</th><th class="r">Rashodi</th><th class="r">Razlika</th></tr></thead><tbody>
+      ${mj.map(r => { const raz = r.uplaceno - r.rashodi; return `<tr><td>${MJ[r.mjesec-1].slice(0,3)}</td>
+        <td class="r">${eur(r.uplaceno)}<small>zad. ${eur(r.zaduzeno)}</small></td>
+        <td class="r">${eur(r.rashodi)}</td><td class="r ${raz<0?'neg':''}">${eur(raz)}</td></tr>`; }).join('')}</tbody>
+      <tfoot><tr><td>Ukupno</td><td class="r">${eur(T('uplaceno'))}<small>zad. ${eur(T('zaduzeno'))}</small></td><td class="r">${eur(T('rashodi'))}</td>
+      <td class="r ${T('uplaceno')-T('rashodi')<0?'neg':''}">${eur(T('uplaceno')-T('rashodi'))}</td></tr></tfoot></table></div>
+      <div class="card-body"><small>Naplativost: ${T('zaduzeno') ? Math.round(T('uplaceno')/T('zaduzeno')*100) : 0}% zaduženog iznosa</small></div></section>
+      <section class="card"><div class="card-head"><h2>Rashodi po kategorijama</h2></div>
+      ${katRows.length ? `<div class="tbl"><table><tbody>${katRows.map(([k,v]) => `<tr><td>${esc(k)}</td><td class="r">${eur(v)}</td>
+        <td class="r muted">${Math.round(v/T('rashodi')*100)}%</td></tr>`).join('')}</tbody></table></div>` : empty('Nema rashoda za ovu godinu.')}</section>`;
+  };
+  $('#god').onchange = load;
+  $('#pr').onclick = () => {
+    const {mj, katRows} = data, T = k => sum(mj, k);
+    printDoc(`<div class="doc">${docHead('GODIŠNJI FINANSIJSKI IZVJEŠTAJ', String(S.god))}
+      <h2>Prihodi i rashodi po mjesecima</h2><table><thead><tr><th>Mjesec</th><th>Zaduženo</th><th>Uplaćeno</th><th>Rashodi</th><th>Razlika</th></tr></thead><tbody>
+      ${mj.map(r => `<tr><td>${MJ[r.mjesec-1]}</td><td>${eur(r.zaduzeno)}</td><td>${eur(r.uplaceno)}</td><td>${eur(r.rashodi)}</td><td>${eur(r.uplaceno-r.rashodi)}</td></tr>`).join('')}
+      <tr class="total"><td>Ukupno</td><td>${eur(T('zaduzeno'))}</td><td>${eur(T('uplaceno'))}</td><td>${eur(T('rashodi'))}</td><td>${eur(T('uplaceno')-T('rashodi'))}</td></tr></tbody></table>
+      <h2>Rashodi po kategorijama</h2><table><tbody>${katRows.map(([k,v]) => `<tr><td>${esc(k)}</td><td>${eur(v)}</td></tr>`).join('')}</tbody></table>
+      <div class="sig">Upravnik: ${esc(S.settings.upravnik||'')}<br><br>______________________</div></div>`);
+  };
+  if (isAdmin()){
+    $('#rac').onclick = () => stampajRacune($('#rm').value || curMonth());
+    $('#bk').onclick = backup;
+  }
+  await load();
+},
+
+/* ---------- MOJ RAČUN (stanar) ---------- */
+async moj(m){
+  const ids = S.prostori.map(p => p.id);
+  const [zadAll, uplAll] = await Promise.all([
+    fetchAll(() => sb.from('zaduzenja').select('*').in('prostor_id', ids).order('id')),
+    fetchAll(() => sb.from('uplate').select('*').in('prostor_id', ids).order('id'))
+  ]);
+  const g = glavniRacun();
+  m.innerHTML = S.prostori.map(p => {
+    const zad = zadAll.filter(z => z.prostor_id === p.id), upl = uplAll.filter(u => u.prostor_id === p.id);
+    return `<section class="card"><div class="card-body" style="padding-top:14px">${karticaInfo(p, zad, upl)}
+      <div class="bar"><button class="btn primary" data-rc="${p.id}">Račun za ${MJ[new Date().getMonth()].toLowerCase()}</button></div>
+      ${g?.broj ? `<p class="hint">Uplate na žiroračun <b>${esc(g.broj)}</b>, primalac: ${esc(S.settings.naziv||'')}, poziv na broj: <b>${esc(p.oznaka)}</b>.</p>` : ''}
+      </div></section>${ledgerTable(zad, upl)}`;
+  }).join('');
+  m.querySelectorAll('[data-rc]').forEach(b => b.onclick = () => stampajRacune(curMonth(), [b.dataset.rc]));
+},
+
+/* ---------- PODEŠAVANJA (admin) ---------- */
+async podesavanja(m){
+  const s = S.settings;
+  const profs = chk(await sb.from('profiles').select('*').order('created_at'));
+  m.innerHTML = `<section class="card"><div class="card-head"><h2>Podaci o zgradi</h2></div><div class="card-body"><form id="sf">
+    ${field('Naziv (npr. SEV Ulica br. 5)', inp('naziv', s.naziv, 'required'))}
+    ${field('Adresa', inp('adresa', s.adresa))}
+    <div class="row2">${field('PIB zgrade', inp('pib', s.pib))}${field('Upravnik', inp('upravnik', s.upravnik))}</div>
+    <div class="row2">${field('Telefon', inp('telefon', s.telefon, 'type="tel"'))}${field('Email', inp('email', s.email, 'type="email"'))}</div>
+    ${field('Napomena na računu', `<textarea name="napomena_racuna" rows="2">${esc(s.napomena_racuna)}</textarea>`)}
+    <label class="check"><input type="checkbox" name="prikazi_dugovanja" ${s.prikazi_dugovanja?'checked':''}> Stanari vide listu dugovanja (samo oznake prostora, bez imena)</label>
+    <button class="btn primary">Sačuvaj</button></form></div></section>
+
+    <section class="card"><div class="card-head"><h2>Žiroračuni</h2><button class="btn sm" id="nr">+ Račun</button></div>
+    <div class="tbl"><table><tbody>${S.racuni.map((r,i) => `<tr class="click" data-i="${i}"><td><b>${esc(r.naziv)}</b><small>${esc(r.broj||'broj nije upisan')}</small></td>
+      <td>${r.tip==='glavni'?'Glavni':'Podračun'}</td><td class="r">poč. ${eur(r.pocetno_stanje)}</td></tr>`).join('')}</tbody></table></div></section>
+
+    <section class="card"><div class="card-head"><h2>Korisnici (${profs.length})</h2></div>
+    <p class="hint" style="padding:0 14px">Stanar se registruje emailom koji je upisan uz njegov prostor i automatski vidi sve prostore sa tim emailom. „Dodatni prostor" služi samo ako stanar koristi drugi email.</p>
+    <div class="tbl"><table><tbody>${profs.map(p => `<tr data-id="${p.id}"><td style="min-width:160px"><b>${esc(p.email)}</b>
+      <small>${esc(povezani(p.email).join(', ') || (p.uloga === 'admin' ? 'upravnik' : 'nije povezan po emailu'))}</small></td>
+      <td>${sel('uloga', [['stanar','Stanar'],['admin','Upravnik']], p.uloga, p.id===S.user.id?'disabled':'')}</td>
+      <td style="min-width:140px">${sel('prostor_id', [['','Dodatni prostor: —'], ...prostorOpts()], p.prostor_id)}</td>
+      <td><button class="btn sm" data-save>Sačuvaj</button></td></tr>`).join('')}</tbody></table></div></section>`;
+
+  $('#sf').onsubmit = async e => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    const row = { naziv:d.naziv.trim(), adresa:d.adresa||null, pib:d.pib||null, upravnik:d.upravnik||null, telefon:d.telefon||null,
+      email:d.email||null, napomena_racuna:d.napomena_racuna||null, prikazi_dugovanja: !!d.prikazi_dugovanja };
+    try { chk(await sb.from('podesavanja').update(row).eq('id',1)); S.settings = {...S.settings, ...row}; toast('Sačuvano'); renderShell(); }
+    catch (err){ toast(errMsg(err), true); }
+  };
+  $('#nr').onclick = () => editRacun();
+  m.querySelectorAll('tr[data-i]').forEach(tr => tr.onclick = () => editRacun(S.racuni[tr.dataset.i]));
+  m.querySelectorAll('[data-save]').forEach(b => b.onclick = async () => {
+    const tr = b.closest('tr');
+    const row = { prostor_id: tr.querySelector('[name=prostor_id]').value || null };
+    if (tr.dataset.id !== S.user.id) row.uloga = tr.querySelector('[name=uloga]').value;
+    try { chk(await sb.from('profiles').update(row).eq('id', tr.dataset.id)); toast('Sačuvano'); }
+    catch (err){ toast(errMsg(err), true); }
+  });
+}
+};
+
+const emailovi = e => String(e || '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
+const povezani = email => S.prostori.filter(p => emailovi(p.email).includes(String(email).toLowerCase())).map(p => p.oznaka);
+
+/* ================================================================
+   KARTICA PROSTORA
+   ================================================================ */
+function ledger(zad, upl){
+  const e = [
+    ...zad.map(z => ({d:z.period, opis:`${z.opis} — ${fmtPeriod(z.period)}`, zad:+z.iznos, upl:0, t:0})),
+    ...upl.map(u => ({d:u.datum, opis:u.opis || 'Uplata', zad:0, upl:+u.iznos, t:1}))
+  ].sort((a,b) => a.d < b.d ? -1 : a.d > b.d ? 1 : a.t - b.t);
+  let s = 0; e.forEach(x => { s += x.zad - x.upl; x.saldo = s; });
+  return e.reverse();
+}
+function ledgerTable(zad, upl){
+  const e = ledger(zad, upl);
+  return `<section class="card"><div class="card-head"><h2>Kartica</h2><small>stavki: ${e.length}</small></div>
+    ${e.length ? `<div class="tbl"><table><thead><tr><th>Opis</th><th class="r">Iznos</th><th class="r">Saldo</th></tr></thead><tbody>
+    ${e.map(x => `<tr><td>${esc(x.opis)}<small>${fmtDate(x.d)}</small></td>
+      <td class="r ${x.upl ? 'pos' : ''}">${x.upl ? '− ' + eur(x.upl) : '+ ' + eur(x.zad)}</td>
+      <td class="r ${x.saldo>0.009?'neg':''}">${eur(x.saldo)}</td></tr>`).join('')}
+    </tbody></table></div><div class="card-body"><small>+ zaduženje · − uplata · saldo = koliko se duguje (minus je preplata)</small></div>` : empty('Nema stavki.')}</section>`;
+}
+function karticaInfo(p, zad, upl){
+  const dug = sum(zad) - sum(upl);
+  return `<dl class="kv"><dt>Prostor</dt><dd><b>${esc(p.oznaka)}</b> · ${TIPOVI[p.tip]||p.tip}${p.povrsina ? ` · ${p.povrsina} m²` : ''}</dd>
+    <dt>Vlasnik</dt><dd>${esc(p.vlasnik||'—')}</dd>
+    ${p.telefon ? `<dt>Telefon</dt><dd><a href="tel:${esc(p.telefon)}">${esc(p.telefon)}</a></dd>` : ''}
+    ${p.email ? `<dt>Email</dt><dd>${esc(p.email)}</dd>` : ''}
+    <dt>Naknada</dt><dd>${eur(p.mjesecna_naknada)} mjesečno</dd>
+    <dt>Stanje</dt><dd>${saldo(dug)}</dd>
+    ${p.napomena ? `<dt>Napomena</dt><dd>${esc(p.napomena)}</dd>` : ''}</dl>`;
+}
+async function karticaProstora(id){
+  try {
+    const [p, zad, upl] = await Promise.all([
+      sb.from('prostori').select('*').eq('id', id).single().then(chk),
+      sb.from('zaduzenja').select('*').eq('prostor_id', id).then(chk),
+      sb.from('uplate').select('*').eq('prostor_id', id).then(chk)
+    ]);
+    const f = modal(p.oznaka, `${karticaInfo(p, zad, upl)}
+      <div class="bar"><button type="button" class="btn primary" id="ku">+ Uplata</button><button type="button" class="btn" id="ke">Uredi</button>
+      <button type="button" class="btn" id="kr">Račun</button><button type="button" class="btn danger" id="kd">Obriši</button></div>
+      ${ledgerTable(zad, upl)}`);
+    f.querySelector('#ku').onclick = () => editUplata({}, id);
+    f.querySelector('#ke').onclick = () => editProstor(p);
+    f.querySelector('#kr').onclick = () => { closeModal(); stampajRacune(curMonth(), [id]); };
+    f.querySelector('#kd').onclick = async () => {
+      if (upl.length) return toast('Prostor ima uplate — umjesto brisanja ga označite kao neaktivan.', true);
+      if (!confirm(`Obrisati ${p.oznaka} i sva njegova zaduženja?`)) return;
+      try { chk(await sb.from('prostori').delete().eq('id', id)); closeModal(); toast('Obrisano'); await refreshProstori(); rerender(); }
+      catch (err){ toast(errMsg(err), true); }
+    };
+  } catch (e){ toast(errMsg(e), true); }
+}
+
+/* ================================================================
+   FORME ZA UNOS
+   ================================================================ */
+function editProstor(p = {}){
+  modal(p.id ? `Uredi ${p.oznaka}` : 'Novi prostor', `
+    <div class="row2">${field('Oznaka *', inp('oznaka', p.oznaka, 'required placeholder="npr. Stan 5"'))}${field('Tip', sel('tip', Object.entries(TIPOVI), p.tip||'stan'))}</div>
+    <div class="row2">${field('Mjesečna naknada (€) *', inp('mjesecna_naknada', p.mjesecna_naknada ?? '', 'type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([.,][0-9]{1,2})?" title="Iznos, npr. 25 ili 25,50" required'))}
+      ${field('Površina (m²)', inp('povrsina', p.povrsina ?? '', 'type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([.,][0-9]{1,2})?" title="Iznos, npr. 25 ili 25,50"'))}</div>
+    ${field('Vlasnik / korisnik', inp('vlasnik', p.vlasnik))}
+    <div class="row2">${field('Email stanara (više odvojite zarezom)', inp('email', p.email, 'type="email" multiple inputmode="email"'))}${field('Telefon', inp('telefon', p.telefon, 'type="tel"'))}</div>
+    ${field('Napomena', `<textarea name="napomena" rows="2">${esc(p.napomena)}</textarea>`)}
+    <label class="check"><input type="checkbox" name="aktivan" ${p.aktivan === false ? '' : 'checked'}> Aktivan (dobija mjesečno zaduženje)</label>
+    <p class="hint">Ko se registruje nekim od ovih emailova, vidi karticu ovog prostora. Isti email možete upisati uz stan i garažu.</p>`, {
+    onSubmit: async d => {
+      const row = { oznaka:d.oznaka.trim(), tip:d.tip, mjesecna_naknada:num(d.mjesecna_naknada), povrsina:d.povrsina ? num(d.povrsina) : null,
+        vlasnik:d.vlasnik?.trim() || null, email:emailovi(d.email).join(', ') || null, telefon:d.telefon?.trim() || null,
+        napomena:d.napomena?.trim() || null, aktivan:!!d.aktivan };
+      if (p.id) chk(await sb.from('prostori').update(row).eq('id', p.id));
+      else chk(await sb.from('prostori').insert(row));
+      closeModal(); toast('Sačuvano'); await refreshProstori(); rerender();
+    }
+  });
+}
+
+function bulkProstori(){
+  modal('Brzi unos prostora', `
+    <div class="row2">${field('Prefiks', inp('pref', 'Stan', 'required'))}${field('Tip', sel('tip', Object.entries(TIPOVI), 'stan'))}</div>
+    <div class="row2">${field('Od broja', inp('od', 1, 'type="number" inputmode="numeric" min="0" required'))}${field('Do broja', inp('do', 20, 'type="number" inputmode="numeric" min="0" required'))}</div>
+    ${field('Mjesečna naknada (€)', inp('nak', '', 'type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([.,][0-9]{1,2})?" title="Iznos, npr. 25 ili 25,50" required'))}
+    <p class="hint">Napraviće „Stan 1" … „Stan 20". Postojeće oznake se preskaču. Vlasnike i emailove upišite naknadno.</p>`, {
+    submitLabel: 'Kreiraj',
+    onSubmit: async d => {
+      const od = parseInt(d.od), doo = parseInt(d.do);
+      if (doo < od || doo - od > 500) throw new Error('Provjerite opseg brojeva.');
+      const rows = []; for (let i = od; i <= doo; i++) rows.push({ oznaka:`${d.pref.trim()} ${i}`, tip:d.tip, mjesecna_naknada:num(d.nak) });
+      chk(await sb.from('prostori').upsert(rows, { onConflict:'oznaka', ignoreDuplicates:true }));
+      closeModal(); toast(`Kreirano do ${rows.length} prostora.`); await refreshProstori(); rerender();
+    }
+  });
+}
+
+function editUplata(u = {}, prostorId){
+  if (!S.racuni.length) return toast('Prvo dodajte žiroračun u Podešavanjima.', true);
+  if (!S.prostori.length) return toast('Prvo dodajte prostore.', true);
+  const f = modal(u.id ? 'Uredi uplatu' : 'Nova uplata', `
+    ${field('Prostor *', sel('prostor_id', [['','— izaberite —'], ...prostorOpts()], u.prostor_id || prostorId || '', 'required'))}
+    <div class="row2">${field('Datum *', inp('datum', u.datum || today(), 'type="date" required'))}
+      ${field('Iznos (€) *', inp('iznos', u.iznos ?? '', 'type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([.,][0-9]{1,2})?" title="Iznos, npr. 25 ili 25,50" required'))}</div>
+    ${field('Na žiroračun', sel('racun_id', S.racuni.map(r => [r.id, r.naziv]), u.racun_id || glavniRacun().id))}
+    ${field('Opis', inp('opis', u.opis || '', 'placeholder="npr. Održavanje za oktobar"'))}
+    ${u.id ? '<button type="button" class="btn danger sm" id="del">Obriši uplatu</button>' : ''}`, {
+    onSubmit: async d => {
+      const row = { prostor_id:d.prostor_id, datum:d.datum, iznos:pozitivan(d.iznos), racun_id:d.racun_id, opis:d.opis?.trim() || null };
+      if (u.id) chk(await sb.from('uplate').update(row).eq('id', u.id));
+      else chk(await sb.from('uplate').insert(row));
+      closeModal(); toast(`Uplata ${eur(row.iznos)} sačuvana`); rerender();
+    }
+  });
+  const el = f.elements;
+  const fill = () => { if (!el.iznos.value){ const p = prostorById(el.prostor_id.value); if (p) el.iznos.value = p.mjesecna_naknada; } };
+  el.prostor_id.onchange = fill; fill();
+  if (!u.id && !el.opis.value) el.opis.value = `Održavanje za ${MJ[new Date().getMonth()].toLowerCase()}`;
+  if (u.id) f.querySelector('#del').onclick = async () => {
+    if (!confirm('Obrisati ovu uplatu?')) return;
+    try { chk(await sb.from('uplate').delete().eq('id', u.id)); closeModal(); toast('Obrisano'); rerender(); } catch (err){ toast(errMsg(err), true); }
+  };
+}
+
+function editRashod(r = {}){
+  if (!S.racuni.length) return toast('Prvo dodajte žiroračun u Podešavanjima.', true);
+  const f = modal(r.id ? 'Uredi rashod' : 'Novi rashod', `
+    <div class="row2">${field('Datum *', inp('datum', r.datum || today(), 'type="date" required'))}
+      ${field('Iznos (€) *', inp('iznos', r.iznos ?? '', 'type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([.,][0-9]{1,2})?" title="Iznos, npr. 25 ili 25,50" required'))}</div>
+    <div class="row2">${field('Kategorija', sel('kategorija', KATEGORIJE.map(k => [k,k]), r.kategorija || 'Ostalo'))}
+      ${field('Sa žiroračuna', sel('racun_id', S.racuni.map(x => [x.id, x.naziv]), r.racun_id || glavniRacun().id))}</div>
+    ${field('Dobavljač / primalac', inp('dobavljac', r.dobavljac, 'placeholder="npr. EPCG, Vodovod, firma za lift"'))}
+    ${field('Opis', inp('opis', r.opis, 'placeholder="npr. Struja zajednički djelovi, septembar"'))}
+    ${r.id ? '<button type="button" class="btn danger sm" id="del">Obriši rashod</button>' : ''}`, {
+    onSubmit: async d => {
+      const row = { datum:d.datum, iznos:pozitivan(d.iznos), kategorija:d.kategorija, racun_id:d.racun_id, dobavljac:d.dobavljac?.trim() || null, opis:d.opis?.trim() || null };
+      if (r.id) chk(await sb.from('rashodi').update(row).eq('id', r.id));
+      else chk(await sb.from('rashodi').insert(row));
+      closeModal(); toast('Rashod sačuvan'); rerender();
+    }
+  });
+  if (r.id) f.querySelector('#del').onclick = async () => {
+    if (!confirm('Obrisati ovaj rashod?')) return;
+    try { chk(await sb.from('rashodi').delete().eq('id', r.id)); closeModal(); toast('Obrisano'); rerender(); } catch (err){ toast(errMsg(err), true); }
+  };
+}
+
+function rashodiTable(rows, clickable = false){
+  return `<div class="tbl"><table><thead><tr><th>Datum</th><th>Opis</th><th class="r">Iznos</th></tr></thead><tbody>
+    ${rows.map((r,i) => `<tr ${clickable ? `class="click" data-i="${i}"` : ''}><td>${fmtDate(r.datum)}</td>
+      <td><b>${esc(r.kategorija)}</b>${r.dobavljac ? ' · ' + esc(r.dobavljac) : ''}<small>${esc(r.opis||'')}</small></td>
+      <td class="r">${eur(r.iznos)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function jednokratno(ym, after){
+  modal(`Jednokratno zaduženje — ${fmtPeriod(monthStart(ym))}`, `
+    ${field('Prostor', sel('prostor_id', [['*','Svi aktivni prostori'], ...prostorOpts()], '*'))}
+    ${field('Opis *', inp('opis', '', 'required placeholder="npr. Popravka lifta, Početno stanje duga"'))}
+    ${field('Iznos po prostoru (€) *', inp('iznos', '', 'type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([.,][0-9]{1,2})?" title="Iznos, npr. 25 ili 25,50" required'))}
+    <p class="hint">Za prenos starih dugova pri prelasku na aplikaciju koristite opis „Početno stanje" za svaki prostor posebno.</p>`, {
+    onSubmit: async d => {
+      const iznos = pozitivan(d.iznos);
+      const ids = d.prostor_id === '*' ? S.prostori.filter(p => p.aktivan).map(p => p.id) : [d.prostor_id];
+      const rows = ids.map(id => ({ prostor_id:id, period:monthStart(ym), iznos, opis:d.opis.trim() }));
+      chk(await sb.from('zaduzenja').insert(rows));
+      closeModal(); toast(`Kreirano ${rows.length} zaduženja.`); after && after();
+    }
+  });
+}
+
+function editRacun(r = {}){
+  const f = modal(r.id ? 'Uredi žiroračun' : 'Novi žiroračun', `
+    ${field('Naziv *', inp('naziv', r.naziv, 'required placeholder="npr. Podračun — fasada"'))}
+    ${field('Broj žiroračuna', inp('broj', r.broj, 'placeholder="510-0000000000000-00"'))}
+    <div class="row2">${field('Tip', sel('tip', [['glavni','Glavni'],['podracun','Podračun (namjenski)']], r.tip || 'podracun'))}
+      ${field('Početno stanje (€)', inp('pocetno_stanje', r.pocetno_stanje ?? 0, 'type="text" inputmode="decimal" autocomplete="off" pattern="-?[0-9]+([.,][0-9]{1,2})?" title="Iznos, npr. 1000 ili -50,25"'))}</div>
+    <p class="hint">Početno stanje = iznos na računu na dan kad počinjete voditi evidenciju u aplikaciji.</p>
+    ${r.id ? '<button type="button" class="btn danger sm" id="del">Obriši račun</button>' : ''}`, {
+    onSubmit: async d => {
+      const row = { naziv:d.naziv.trim(), broj:d.broj?.trim() || null, tip:d.tip, pocetno_stanje:num(d.pocetno_stanje) };
+      if (r.id) chk(await sb.from('racuni').update(row).eq('id', r.id));
+      else chk(await sb.from('racuni').insert(row));
+      S.racuni = chk(await sb.from('racuni').select('*').order('tip').order('naziv'));
+      closeModal(); toast('Sačuvano'); rerender();
+    }
+  });
+  if (r.id) f.querySelector('#del').onclick = async () => {
+    if (!confirm('Obrisati ovaj žiroračun?')) return;
+    try {
+      chk(await sb.from('racuni').delete().eq('id', r.id));
+      S.racuni = S.racuni.filter(x => x.id !== r.id); closeModal(); toast('Obrisano'); rerender();
+    } catch (err){ toast(errMsg(err), true); }
+  };
+}
+
+/* ================================================================
+   RAČUNI ZA ŠTAMPU
+   ================================================================ */
+async function stampajRacune(ym, ids){
+  try {
+    const start = monthStart(ym), end = nextMonthStart(ym), yStart = ym.slice(0,4) + '-01-01';
+    let qp = sb.from('prostori').select('*');
+    qp = ids ? qp.in('id', ids) : qp.eq('aktivan', true);
+    const [pr, zadAll, uplAll] = await Promise.all([
+      qp.then(chk),
+      fetchAll(() => sb.from('zaduzenja').select('*').lt('period', end).order('id')),
+      fetchAll(() => sb.from('uplate').select('*').lt('datum', end).order('id'))
+    ]);
+    if (!pr.length) return toast('Nema prostora za štampu.', true);
+    const g = glavniRacun();
+    const pages = sortNat(pr, 'oznaka').map(p => {
+      const zad = zadAll.filter(z => z.prostor_id === p.id), upl = uplAll.filter(u => u.prostor_id === p.id);
+      const ovaj = zad.filter(z => z.period === start);
+      const prethodno = sum(zad.filter(z => z.period < start)) - sum(upl);
+      const zaUplatu = Math.max(0, prethodno + sum(ovaj));
+      const ist = upl.filter(u => u.datum >= yStart).sort((a,b) => a.datum < b.datum ? -1 : 1);
+      return `<div class="page doc">${docHead('RAČUN ZA ODRŽAVANJE ZGRADE', `Br. ${ym.replace('-','')}-${p.oznaka}`)}
+        <table><tbody><tr><th style="width:35%">Prostor</th><td>${esc(p.oznaka)} (${TIPOVI[p.tip]||p.tip})</td></tr>
+        <tr><th>Vlasnik / korisnik</th><td>${esc(p.vlasnik||'')}</td></tr><tr><th>Obračunski period</th><td>${fmtPeriod(start)}</td></tr></tbody></table>
+        <h2>Obračun</h2><table><thead><tr><th>Stavka</th><th style="width:30%">Iznos</th></tr></thead><tbody>
+        ${ovaj.map(z => `<tr><td>${esc(z.opis)} — ${fmtPeriod(start)}</td><td>${eur(z.iznos)}</td></tr>`).join('') || `<tr><td>Nema zaduženja za ovaj mjesec</td><td>${eur(0)}</td></tr>`}
+        <tr><td>${prethodno >= 0 ? 'Dug iz prethodnog perioda' : 'Preplata iz prethodnog perioda'}</td><td>${prethodno >= 0 ? eur(prethodno) : '− ' + eur(-prethodno)}</td></tr>
+        <tr class="total"><td>UKUPNO ZA UPLATU</td><td>${eur(zaUplatu)}</td></tr></tbody></table>
+        <div class="pay"><b>Podaci za uplatu</b><br>Primalac: ${esc(S.settings.naziv||'')}${S.settings.adresa ? ', ' + esc(S.settings.adresa) : ''}<br>
+        Žiroračun: <b>${esc(g?.broj||'—')}</b><br>Svrha: Održavanje zgrade ${fmtPeriod(start)}<br>Poziv na broj: <b>${esc(p.oznaka)}</b><br>Iznos: <b>${eur(zaUplatu)}</b></div>
+        ${S.settings.napomena_racuna ? `<p>${esc(S.settings.napomena_racuna)}</p>` : ''}
+        <h2>Uplate u ${ym.slice(0,4)}. godini</h2>
+        ${ist.length ? `<table><thead><tr><th>Datum</th><th>Opis</th><th>Iznos</th></tr></thead><tbody>
+          ${ist.map(u => `<tr><td>${fmtDate(u.datum)}</td><td>${esc(u.opis||'Uplata')}</td><td>${eur(u.iznos)}</td></tr>`).join('')}
+          <tr class="total"><td colspan="2">Ukupno uplaćeno</td><td>${eur(sum(ist))}</td></tr></tbody></table>` : '<p>Nema uplata u ovoj godini.</p>'}
+        <div class="sig">Upravnik: ${esc(S.settings.upravnik||'')}${S.settings.telefon ? ' · ' + esc(S.settings.telefon) : ''}</div></div>`;
+    });
+    printDoc(pages.join(''));
+  } catch (e){ toast(errMsg(e), true); }
+}
+
+/* ================================================================
+   REZERVNA KOPIJA
+   ================================================================ */
+async function backup(){
+  try {
+    const tabele = ['podesavanja','racuni','prostori','zaduzenja','uplate','rashodi','profiles'];
+    const out = { izvezeno: new Date().toISOString() };
+    for (const t of tabele) out[t] = await fetchAll(() => sb.from(t).select('*').order('id'));
+    const blob = new Blob([JSON.stringify(out, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `zgrada-backup-${today()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast('Rezervna kopija preuzeta');
+  } catch (e){ toast(errMsg(e), true); }
+}
+
+/* ---------- PWA ---------- */
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
